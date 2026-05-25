@@ -1,0 +1,21 @@
+{
+  "overview": "WordPlay is a mobile-first English vocabulary learning game on the Internet Computer with multiple game modes, admin panel, analytics, and secure authentication.",
+  "features": [
+    "Secure admin login with BCrypt password hashing, AES-256 Gmail encryption, math challenge, and rate limiting",
+    "Multiple vocabulary game modes (Flashcards, Meaning Match, Memory Match, and more)",
+    "Admin panel for managing languages, vocabulary, quotes, and feedback",
+    "Analytics dashboard with per-user progress and global statistics",
+    "Post-game analysis with motivational quotes",
+    "Dark and light mode theme switcher"
+  ],
+  "category": "education",
+  "tags": [
+    "vocabulary",
+    "language-learning",
+    "games",
+    "icp",
+    "admin-panel",
+    "secure-auth"
+  ],
+  "last_updated": "2026-05-25T05:49:25.527Z"
+}

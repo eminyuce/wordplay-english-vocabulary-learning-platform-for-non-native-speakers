@@ -1,0 +1,178 @@
+type Word = 
+ record {
+   addedAt: Time;
+   difficulty: Difficulty;
+   english: text;
+   examples: vec text;
+   foreign: text;
+   id: nat;
+   languageName: text;
+ };
+type UserProgress = 
+ record {
+   accuracy: float64;
+   badges: vec text;
+   lastPlayed: opt Time;
+   mostPlayedGameMode: text;
+   "principal": principal;
+   streak: nat;
+   totalAnswered: nat;
+   totalCorrect: nat;
+   totalGames: nat;
+   xp: nat;
+ };
+type UserProfile = 
+ record {
+   joinedAt: Time;
+   name: text;
+   preferredLanguages: vec text;
+ };
+type Time = int;
+type TextDirection = 
+ variant {
+   ltr;
+   rtl;
+ };
+type MotivationalQuote = 
+ record {
+   createdAt: Time;
+   id: nat;
+   "text": text;
+ };
+type Language = 
+ record {
+   code: text;
+   createdAt: Time;
+   flagEmoji: text;
+   gradientEnd: text;
+   gradientStart: text;
+   name: text;
+   ordering: nat;
+   textDirection: TextDirection;
+ };
+type GlobalAnalytics = 
+ record {
+   averageAccuracy: float64;
+   totalQuestionsAnswered: nat;
+   totalSessions: nat;
+   totalUsers: nat;
+ };
+type FeedbackStatus = 
+ variant {
+   completed;
+   pending;
+ };
+type FeedbackCategory = 
+ variant {
+   bug;
+   idea;
+   issue;
+ };
+type Feedback = 
+ record {
+   authorName: opt text;
+   authorPrincipal: opt principal;
+   category: FeedbackCategory;
+   createdAt: Time;
+   id: nat;
+   message: text;
+   status: FeedbackStatus;
+   title: text;
+ };
+type DifficultySelector = 
+ variant {
+   advanced;
+   all;
+   beginner;
+   hard;
+   medium;
+ };
+type Difficulty = 
+ variant {
+   advanced;
+   beginner;
+   hard;
+   medium;
+ };
+service : {
+  addWord: (english: text, foreign: text, language: text, difficulty:
+   Difficulty, examples: vec text) -> ();
+  adminLogin: (username: text, password: text, challengeId: text,
+   challengeAnswer: int) -> (record {
+                               error: text;
+                               ok: bool;
+                               token: text;
+                             });
+  adminLogout: (token: text) -> ();
+  bulkImportLanguages: (languageRows:
+   vec record {
+         text;
+         text;
+         text;
+         TextDirection;
+         text;
+         text;
+         nat;
+       }) -> (record {
+                count: nat;
+                errors: vec text;
+              });
+  bulkImportWords: (wordsToImport: vec Word) ->
+   (record {
+      count: nat;
+      success: bool;
+    });
+  createLanguage: (name: text, code: text, flag: text, direction:
+   TextDirection, startColor: text, endColor: text, ordering: nat) -> ();
+  createQuote: ("text": text) -> (MotivationalQuote);
+  deleteFeedback: (id: nat) -> ();
+  deleteQuote: (id: nat) -> ();
+  deleteWord: (id: nat) -> ();
+  exportWordsCSV: (language: text) ->
+   (vec record {
+          text;
+          text;
+          text;
+          text;
+          text;
+          text;
+        }) query;
+  exportWordsJSON: (language: text) -> (vec Word) query;
+  generateMathChallenge: () -> (record {
+                                  challengeId: text;
+                                  question: text;
+                                });
+  getAllFeedback: () -> (vec Feedback) query;
+  getAllLanguages: () -> (vec Language) query;
+  getAllQuotes: () -> (vec MotivationalQuote) query;
+  getAllQuotesPublic: () -> (vec MotivationalQuote) query;
+  getAllWords: () -> (vec Word) query;
+  getCallerUserProfile: () -> (opt UserProfile) query;
+  getGlobalAnalytics: () -> (GlobalAnalytics) query;
+  getLanguagesSorted: () -> (vec Language) query;
+  getUserAnalytics: ("principal": principal) -> (opt UserProgress) query;
+  getUserProfile: (user: principal) -> (opt UserProfile) query;
+  getWord: (id: nat) -> (opt Word) query;
+  getWordsByDifficulty: (language: text, difficultySelector:
+   DifficultySelector) -> (vec Word) query;
+  getWordsCountForLanguage: (language: text) -> (nat) query;
+  getWordsForLanguagePage: (language: text, offset: nat, limit: nat) ->
+   (vec Word) query;
+  isAuthenticatedAdminByToken: (token: text) -> (bool) query;
+  markFeedbackCompleted: (id: nat) -> ();
+  recordGameRound: (correctAnswers: nat, totalQuestions: nat, gameMode:
+   text) -> ();
+  removeLanguage: (language: text) -> ();
+  removeWordsByLanguage: (language: text) -> ();
+  saveCallerUserProfile: (profile: UserProfile) -> ();
+  seedInitialLanguages: () -> ();
+  submitFeedback: (authorPrincipal: opt principal, authorName: opt text,
+   category: FeedbackCategory, title: text, message: text) -> (Feedback);
+  updateLanguage: (languageName: text, newName: text, newCode: text, newFlag:
+   text, newDirection: TextDirection, newGradientStart: text, newGradientEnd:
+   text, newOrdering: nat) -> ();
+  updateLanguageOrdering: (languageName: text, newOrdering: nat) -> ();
+  updateQuote: (id: nat, "text": text) -> (MotivationalQuote);
+  updateWord: (id: nat, english: text, foreign: text, language: text,
+   difficulty: Difficulty, examples: vec text) -> ();
+}

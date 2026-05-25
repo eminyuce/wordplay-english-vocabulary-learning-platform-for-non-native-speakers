@@ -1,0 +1,174 @@
+// Version: 1.0.0
+type Data__159895909<T> = {var count : Nat__490723111; elements : [var ?T]};
+type Data__791452850<K, V> =
+  {var count : Nat__490723111; kvs : [var ?(K, V)]};
+type DifficultySelector__500654283 =
+  {#advanced; #all; #beginner; #hard; #medium};
+type Difficulty__1031142272 = {#advanced; #beginner; #hard; #medium};
+type FeedbackCategory__859949858 = {#bug; #idea; #issue};
+type FeedbackStatus__651501689 = {#completed; #pending};
+type Feedback__217957820 =
+  {
+    authorName : ?Text;
+    authorPrincipal : ?Principal;
+    category : FeedbackCategory__859949858;
+    createdAt : Time__900049286;
+    id : Nat;
+    message : Text;
+    status : FeedbackStatus__651501689;
+    title : Text
+  };
+type Int__270357528 = Int__616954475;
+type Int__616954475 = Int;
+type Internal__667636161<T> =
+  {children : [var ?Node__92254746<T>]; data : Data__159895909<T>};
+type Internal__8484328<K, V> =
+  {children : [var ?Node__46230540<K, V>]; data : Data__791452850<K, V>};
+type Language__38428764 =
+  {
+    code : Text;
+    createdAt : Time__900049286;
+    flagEmoji : Text;
+    gradientEnd : Text;
+    gradientStart : Text;
+    name : Text;
+    ordering : Nat;
+    textDirection : TextDirection__722822392
+  };
+type Leaf__520550824<T> = {data : Data__159895909<T>};
+type Leaf__809889148<K, V> = {data : Data__791452850<K, V>};
+type MathChallenge__339039876 =
+  {a : Int; answer : Int; b : Int; expiry : Int; op : Text};
+type MotivationalQuote__259217405 =
+  {createdAt : Time__900049286; id : Nat; text : Text};
+type Nat__490723111 = Nat__920180692;
+type Nat__920180692 = Nat;
+type Node__46230540<K, V> =
+  {#internal : Internal__8484328<K, V>; #leaf : Leaf__809889148<K, V>};
+type Node__92254746<T> =
+  {#internal : Internal__667636161<T>; #leaf : Leaf__520550824<T>};
+type RateEntry__1045759954 = {count : Nat; windowStart : Int};
+type Set__532252804<T> = Set__710576254<T>;
+type Set__710576254<T> =
+  {var root : Node__92254746<T>; var size : Nat__490723111};
+type TextDirection__722822392 = {#ltr; #rtl};
+type Time__796480547 = Int__270357528;
+type Time__900049286 = Time__796480547;
+type UserPreferences__810131452 =
+  {
+    difficulty : DifficultySelector__500654283;
+    lastSelectedLanguage : ?Text;
+    principal : Principal
+  };
+type UserProfile__491224006 =
+  {joinedAt : Time__900049286; name : Text; preferredLanguages : [Text]};
+type UserProgress__827981433 =
+  {
+    accuracy : Float;
+    badges : [Text];
+    lastPlayed : ?Time__900049286;
+    mostPlayedGameMode : Text;
+    principal : Principal;
+    streak : Nat;
+    totalAnswered : Nat;
+    totalCorrect : Nat;
+    totalGames : Nat;
+    xp : Nat
+  };
+type Word__740822018 =
+  {
+    addedAt : Time__900049286;
+    difficulty : Difficulty__1031142272;
+    english : Text;
+    examples : [Text];
+    foreign : Text;
+    id : Nat;
+    languageName : Text
+  };
+actor {
+  stable activeChallenges :
+    {
+      var root : Node__46230540<Text, MathChallenge__339039876>;
+      var size : Nat__490723111
+    };
+  stable adminSessionDuration : Int;
+  stable adminSessionTokens :
+    {var root : Node__46230540<Text, Int>; var size : Nat__490723111};
+  stable adminSessions :
+    {var root : Node__46230540<Principal, Int>; var size : Nat__490723111};
+  stable callerTokenMap :
+    {var root : Node__46230540<Principal, Text>; var size : Nat__490723111};
+  stable challengeTTL : Int;
+  stable var encryptedGmail : Text;
+  stable examplesByEnglishWord :
+    {
+      var root : Node__46230540<Text, Set__532252804<Text>>;
+      var size : Nat__490723111
+    };
+  stable existingVocabKeys :
+    {var root : Node__92254746<Text>; var size : Nat__490723111};
+  stable feedback :
+    {
+      var root : Node__46230540<Nat, Feedback__217957820>;
+      var size : Nat__490723111
+    };
+  stable gameModeAccuracy :
+    {var root : Node__46230540<Text, Float>; var size : Nat__490723111};
+  stable gameModePlays :
+    {var root : Node__46230540<Text, Nat>; var size : Nat__490723111};
+  stable gameModeScores :
+    {var root : Node__46230540<Text, Float>; var size : Nat__490723111};
+  stable languageAttempts :
+    {var root : Node__46230540<Text, Nat>; var size : Nat__490723111};
+  stable languageGamesPlayed :
+    {var root : Node__46230540<Text, Nat>; var size : Nat__490723111};
+  stable languages :
+    {
+      var root : Node__46230540<Text, Language__38428764>;
+      var size : Nat__490723111
+    };
+  stable loginAttempts :
+    {
+      var root : Node__46230540<Text, RateEntry__1045759954>;
+      var size : Nat__490723111
+    };
+  stable maxLoginAttempts : Nat;
+  stable maxPageSize : Nat;
+  stable motivationalQuotes :
+    {
+      var root : Node__46230540<Nat, MotivationalQuote__259217405>;
+      var size : Nat__490723111
+    };
+  stable var nextFeedbackId : Nat;
+  stable var nextQuoteId : Nat;
+  stable var nextWordId : Nat;
+  stable rateLimitWindow : Int;
+  stable var totalCorrect : Nat;
+  stable var totalQuestionsAnswered : Nat;
+  stable var totalSessions : Nat;
+  stable userPreferences :
+    {
+      var root : Node__46230540<Principal, UserPreferences__810131452>;
+      var size : Nat__490723111
+    };
+  stable userProfiles :
+    {
+      var root : Node__46230540<Principal, UserProfile__491224006>;
+      var size : Nat__490723111
+    };
+  stable userProgress :
+    {
+      var root : Node__46230540<Principal, UserProgress__827981433>;
+      var size : Nat__490723111
+    };
+  stable usernames :
+    {var root : Node__46230540<Text, Text>; var size : Nat__490723111};
+  stable words :
+    {
+      var root : Node__46230540<Nat, Word__740822018>;
+      var size : Nat__490723111
+    };
+  stable wordsByEnglishWord :
+    {var root : Node__46230540<Text, Nat>; var size : Nat__490723111};
+  stable xorKey : Text
+};
