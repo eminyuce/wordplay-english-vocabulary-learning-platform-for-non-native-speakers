@@ -14,7 +14,7 @@ export default function AdminLoginForm() {
   const [challengeLoading, setChallengeLoading] = useState(false);
   const [challengeError, setChallengeError] = useState(false);
   const [loginError, setLoginError] = useState("");
-  const { login, isLoggingIn } = useAdminAuth();
+  const { login, isLoggingIn, isConnecting } = useAdminAuth();
   const { actor } = useActor();
 
   const fetchChallenge = useCallback(async () => {
@@ -95,6 +95,16 @@ export default function AdminLoginForm() {
           <p className="text-center text-gray-600 dark:text-gray-300">
             Complete the challenge and enter your credentials
           </p>
+          {/* Backend connecting banner */}
+          {isConnecting && (
+            <div
+              data-ocid="admin.login.loading_state"
+              className="flex items-center justify-center gap-2 mt-2 px-4 py-2 rounded-xl bg-blue-500/10 border border-blue-400/30 text-blue-600 dark:text-blue-300 text-sm font-medium animate-pulse"
+            >
+              <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              Connecting to backend…
+            </div>
+          )}
         </div>
 
         {/* Form */}
@@ -195,7 +205,7 @@ export default function AdminLoginForm() {
                   setLoginError("");
                 }}
                 className="w-full pl-11 h-12 px-4 rounded-xl bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm border border-white/20 dark:border-gray-700/30 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all shadow-lg"
-                disabled={isLoggingIn}
+                disabled={isLoggingIn || isConnecting}
                 required
                 autoComplete="username"
               />
@@ -223,7 +233,7 @@ export default function AdminLoginForm() {
                   setLoginError("");
                 }}
                 className="w-full pl-11 h-12 px-4 rounded-xl bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm border border-white/20 dark:border-gray-700/30 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all shadow-lg"
-                disabled={isLoggingIn}
+                disabled={isLoggingIn || isConnecting}
                 required
                 autoComplete="current-password"
               />
@@ -247,6 +257,7 @@ export default function AdminLoginForm() {
             className="w-full h-12 text-base font-semibold rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-xl hover:shadow-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             disabled={
               isLoggingIn ||
+              isConnecting ||
               challengeLoading ||
               !challengeQuestion ||
               !username.trim() ||
@@ -254,7 +265,12 @@ export default function AdminLoginForm() {
               !challengeAnswer.trim()
             }
           >
-            {isLoggingIn ? (
+            {isConnecting ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Connecting…
+              </>
+            ) : isLoggingIn ? (
               <>
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 Logging in…

@@ -11544,7 +11544,7 @@ function isPlainObject$1(o2) {
 function hasObjectPrototype$1(o2) {
   return Object.prototype.toString.call(o2) === "[object Object]";
 }
-function sleep(timeout2) {
+function sleep$1(timeout2) {
   return new Promise((resolve) => {
     timeoutManager.setTimeout(resolve, timeout2);
   });
@@ -11870,7 +11870,7 @@ function createRetryer(config) {
       }
       failureCount++;
       (_a3 = config.onFail) == null ? void 0 : _a3.call(config, failureCount, error);
-      sleep(delay).then(() => {
+      sleep$1(delay).then(() => {
         return canContinue() ? void 0 : pause();
       }).then(() => {
         if (isRetryCancelled) {
@@ -43328,6 +43328,11 @@ function createActor(canisterId, _uploadFile, _downloadFile, options = {}) {
 function useActor() {
   return useActor$1(createActor);
 }
+const RETRY_COUNT = 3;
+const RETRY_DELAY_MS = 1e3;
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 const AdminAuthContext = reactExports.createContext(
   void 0
 );
@@ -43339,7 +43344,12 @@ function AdminAuthProvider({ children }) {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = reactExports.useState(false);
   const [isLoading, setIsLoading] = reactExports.useState(true);
   const [isLoggingIn, setIsLoggingIn] = reactExports.useState(false);
+  const [isConnecting, setIsConnecting] = reactExports.useState(false);
   const { actor, isFetching } = useActor();
+  const actorRef = reactExports.useRef(actor);
+  reactExports.useEffect(() => {
+    actorRef.current = actor;
+  }, [actor]);
   const validationAttempted = reactExports.useRef(false);
   reactExports.useEffect(() => {
     if (isFetching || !actor) return;
@@ -43372,13 +43382,25 @@ function AdminAuthProvider({ children }) {
   }, [actor, isFetching]);
   const login = reactExports.useCallback(
     async (username, password, challengeId, challengeAnswer, onError) => {
-      if (!actor) {
-        ue.error("Backend not available. Please try again.");
+      let resolvedActor = actorRef.current;
+      if (!resolvedActor) {
+        setIsConnecting(true);
+        for (let attempt = 0; attempt < RETRY_COUNT; attempt++) {
+          await sleep(RETRY_DELAY_MS);
+          resolvedActor = actorRef.current;
+          if (resolvedActor) break;
+        }
+        setIsConnecting(false);
+      }
+      if (!resolvedActor) {
+        const errMsg = "Backend not available. Please try again.";
+        onError == null ? void 0 : onError(errMsg);
+        ue.error(errMsg);
         return false;
       }
       setIsLoggingIn(true);
       try {
-        const result = await actor.adminLogin(
+        const result = await resolvedActor.adminLogin(
           username,
           password,
           challengeId,
@@ -43405,7 +43427,7 @@ function AdminAuthProvider({ children }) {
         setIsLoggingIn(false);
       }
     },
-    [actor]
+    []
   );
   const logout = reactExports.useCallback(() => {
     const currentToken = localStorage.getItem(ADMIN_TOKEN_KEY);
@@ -43425,6 +43447,7 @@ function AdminAuthProvider({ children }) {
         isAdminAuthenticated,
         isLoading,
         isLoggingIn,
+        isConnecting,
         token,
         login,
         logout
@@ -50854,7 +50877,7 @@ function AdminLoginForm() {
   const [challengeLoading, setChallengeLoading] = reactExports.useState(false);
   const [challengeError, setChallengeError] = reactExports.useState(false);
   const [loginError, setLoginError] = reactExports.useState("");
-  const { login, isLoggingIn } = useAdminAuth();
+  const { login, isLoggingIn, isConnecting } = useAdminAuth();
   const { actor } = useActor();
   const fetchChallenge = reactExports.useCallback(async () => {
     if (!actor) return;
@@ -50914,7 +50937,18 @@ function AdminLoginForm() {
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-8 pb-6 space-y-4", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 backdrop-blur-sm flex items-center justify-center border border-white/20 dark:border-gray-700/30 shadow-lg", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Shield, { className: "w-8 h-8 text-purple-600 dark:text-purple-400" }) }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "text-3xl font-bold text-center tracking-tight text-gray-900 dark:text-white", children: "Admin Login" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-center text-gray-600 dark:text-gray-300", children: "Complete the challenge and enter your credentials" })
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-center text-gray-600 dark:text-gray-300", children: "Complete the challenge and enter your credentials" }),
+      isConnecting && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        "div",
+        {
+          "data-ocid": "admin.login.loading_state",
+          className: "flex items-center justify-center gap-2 mt-2 px-4 py-2 rounded-xl bg-blue-500/10 border border-blue-400/30 text-blue-600 dark:text-blue-300 text-sm font-medium animate-pulse",
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" }),
+            "Connecting to backend…"
+          ]
+        }
+      )
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("form", { onSubmit: handleSubmit, className: "px-8 pb-8 space-y-5", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-3 p-5 bg-gradient-to-br from-purple-500/10 to-blue-500/10 backdrop-blur-sm rounded-2xl border border-white/20 dark:border-gray-700/30 shadow-lg", children: [
@@ -51007,7 +51041,7 @@ function AdminLoginForm() {
                 setLoginError("");
               },
               className: "w-full pl-11 h-12 px-4 rounded-xl bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm border border-white/20 dark:border-gray-700/30 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all shadow-lg",
-              disabled: isLoggingIn,
+              disabled: isLoggingIn || isConnecting,
               required: true,
               autoComplete: "username"
             }
@@ -51038,7 +51072,7 @@ function AdminLoginForm() {
                 setLoginError("");
               },
               className: "w-full pl-11 h-12 px-4 rounded-xl bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm border border-white/20 dark:border-gray-700/30 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all shadow-lg",
-              disabled: isLoggingIn,
+              disabled: isLoggingIn || isConnecting,
               required: true,
               autoComplete: "current-password"
             }
@@ -51059,8 +51093,11 @@ function AdminLoginForm() {
           type: "submit",
           "data-ocid": "admin.login.submit_button",
           className: "w-full h-12 text-base font-semibold rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-xl hover:shadow-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2",
-          disabled: isLoggingIn || challengeLoading || !challengeQuestion || !username.trim() || !password.trim() || !challengeAnswer.trim(),
-          children: isLoggingIn ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+          disabled: isLoggingIn || isConnecting || challengeLoading || !challengeQuestion || !username.trim() || !password.trim() || !challengeAnswer.trim(),
+          children: isConnecting ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" }),
+            "Connecting…"
+          ] }) : isLoggingIn ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" }),
             "Logging in…"
           ] }) : "Login"

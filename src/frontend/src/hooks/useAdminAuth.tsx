@@ -10,10 +10,18 @@ import {
 import { toast } from "sonner";
 import { useActor } from "./useActor";
 
+const RETRY_COUNT = 3;
+const RETRY_DELAY_MS = 1000;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 interface AdminAuthContextType {
   isAdminAuthenticated: boolean;
   isLoading: boolean;
   isLoggingIn: boolean;
+  isConnecting: boolean;
   token: string | null;
   login: (
     username: string,
@@ -38,7 +46,14 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
   const { actor, isFetching } = useActor();
+  const actorRef = useRef(actor);
+
+  // Keep ref in sync so retry loop can see latest actor
+  useEffect(() => {
+    actorRef.current = actor;
+  }, [actor]);
   const validationAttempted = useRef(false);
 
   // Validate stored token on mount / once actor is ready
@@ -83,14 +98,28 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
       challengeAnswer: bigint,
       onError?: (msg: string) => void,
     ): Promise<boolean> => {
-      if (!actor) {
-        toast.error("Backend not available. Please try again.");
+      // Retry loop: wait for actor to become available before giving up
+      let resolvedActor = actorRef.current;
+      if (!resolvedActor) {
+        setIsConnecting(true);
+        for (let attempt = 0; attempt < RETRY_COUNT; attempt++) {
+          await sleep(RETRY_DELAY_MS);
+          resolvedActor = actorRef.current;
+          if (resolvedActor) break;
+        }
+        setIsConnecting(false);
+      }
+
+      if (!resolvedActor) {
+        const errMsg = "Backend not available. Please try again.";
+        onError?.(errMsg);
+        toast.error(errMsg);
         return false;
       }
 
       setIsLoggingIn(true);
       try {
-        const result = await actor.adminLogin(
+        const result = await resolvedActor.adminLogin(
           username,
           password,
           challengeId,
@@ -119,7 +148,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
         setIsLoggingIn(false);
       }
     },
-    [actor],
+    [],
   );
 
   const logout = useCallback(() => {
@@ -140,6 +169,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
         isAdminAuthenticated,
         isLoading,
         isLoggingIn,
+        isConnecting,
         token,
         login,
         logout,
